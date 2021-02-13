@@ -5,18 +5,20 @@ import java.io.Serializable;
 public class HexData implements Serializable {
     boolean traversable;
     int terraincost;
+    enum TerrainType {Ocean, Land, Lake}
+    TerrainType type;
 
-    Map.TerrainType type;
-    Map.Modifier modifier;
+    enum Modifier {Move}
+    Modifier modifier;
 
     public HexData() {
-        type = Map.TerrainType.Ocean;
+        type = TerrainType.Ocean;
 
         this.traversable = false;
         this.terraincost = 1;
     }
 
-    public void setTerrain(Map.TerrainType type){
+    public void setTerrain(TerrainType type){
         switch (type){
             case Lake:
             case Ocean:
@@ -30,7 +32,7 @@ public class HexData implements Serializable {
         }
     }
 
-    public void setModifier(Map.Modifier modifier){
+    public void setModifier(Modifier modifier){
         this.modifier = modifier;
     }
 }

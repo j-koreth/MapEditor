@@ -1,32 +1,35 @@
 package map;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 public class Main extends Application {
 
-
-    Map.TerrainType currentDrawing = Map.TerrainType.Ocean;
-
-    enum Action {Drawing, Move};
+    enum Action {Drawing, Move}
     Action currentAction;
 
-    Map.Modifier currentModifier = Map.Modifier.Move;
+    HexData.TerrainType currentDrawing = HexData.TerrainType.Ocean;
+    HexData.Modifier currentModifier = HexData.Modifier.Move;
+
+    boolean mapChange = false;
 
     public static void main(String[] args) {
         launch(args);
@@ -35,105 +38,176 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("Map");
-        Group root = new Group();
-        Canvas canvas = new Canvas(980, 600);
+        primaryStage.initStyle(StageStyle.UNDECORATED);
+
+        primaryStage.setTitle("Map Editor");
         FileChooser fileChooser = new FileChooser();
 
+        Canvas canvas = new Canvas(980, 600);
         GraphicsContext gc = canvas.getGraphicsContext2D();
-        gc.setStroke(Color.WHEAT);
-        gc.setLineWidth(2);
 
+        Canvas canvas2  = new Canvas(980, 600);
+        GraphicsContext gc2 = canvas2.getGraphicsContext2D();
+
+        Group root = new Group();
         VBox holder = new VBox();
-        HBox controls = new HBox();
+
+        VBox controls = new VBox();
+        HBox terrainControls = new HBox();
+        HBox actionControls = new HBox();
+
+        controls.getChildren().addAll(terrainControls, actionControls);
 
         Label tileTypes = new Label("Tile Types");
         Button oceanButton = new Button("Ocean");
         Button landButton = new Button("Land");
         Button lakebutton = new Button("Lake");
+        terrainControls.getChildren().addAll(tileTypes, oceanButton, landButton, lakebutton);
 
+        Label actionTypes = new Label("Action Types");
         Button moveButton = new Button("Move");
+        actionControls.getChildren().addAll(actionTypes, moveButton);
 
-        Button saveButton = new Button("Save");
-        Button openButton = new Button("Open");
+
+        terrainControls.setSpacing(10);
+        terrainControls.setPadding(new Insets(10));
+
+        actionControls.setSpacing(10);
+        actionControls.setPadding(new Insets(10));
 
         oceanButton.setOnMouseClicked(event -> {
             currentAction = Action.Drawing;
-            currentDrawing = Map.TerrainType.Ocean;
+            currentDrawing = HexData.TerrainType.Ocean;
         });
 
         landButton.setOnMouseClicked(event -> {
             currentAction = Action.Drawing;
-            currentDrawing = Map.TerrainType.Land;
+            currentDrawing = HexData.TerrainType.Land;
         });
 
         lakebutton.setOnMouseClicked(event -> {
             currentAction = Action.Drawing;
-            currentDrawing = Map.TerrainType.Lake;
+            currentDrawing = HexData.TerrainType.Lake;
         });
 
         moveButton.setOnMouseClicked(event -> {
             currentAction = Action.Move;
         });
 
-        controls.setSpacing(10);
+        MapData mapData = new MapData();
 
-        controls.getChildren().addAll(tileTypes, oceanButton, landButton, lakebutton, moveButton, saveButton, openButton);
-        holder.getChildren().addAll(canvas, controls);
+        Map basicMap = new BasicMap(mapData, gc);
+        basicMap.selected = true;
+
+        Map terrainMap = new TerrainMap(mapData, gc);
+        Map actionMap = new ActionMap(mapData, gc2);
+
+        ArrayList<Map> mapOrder = new ArrayList<>();
+        mapOrder.add(basicMap);
+        mapOrder.add(terrainMap);
+        mapOrder.add(actionMap);
+
+        CheckBox terrainCheck = new CheckBox("Terrain Map");
+        CheckBox actionCheck = new CheckBox("Action Map");
+
+        BorderPane borderPane = new BorderPane();
+        Pane pane = new Pane();
+        pane.getChildren().add(canvas);
+        pane.getChildren().add(canvas2);
+        borderPane.setCenter(pane);
+        borderPane.setBottom(controls);
+
+        MenuBar menuBar = new MenuBar();
+        Menu menu = new Menu("File");
+        MenuItem saveItem = new MenuItem("Save");
+        MenuItem openItem = new MenuItem("Open");
+        menu.getItems().addAll(saveItem, openItem);
+
+        menuBar.getMenus().add(menu);
+
+        holder.getChildren().addAll(menuBar, borderPane);
+
+        VBox mapTypesBox = new VBox(terrainCheck, actionCheck);
+        mapTypesBox.setSpacing(20);
+        mapTypesBox.setPadding(new Insets(20));
+
+        borderPane.setRight(mapTypesBox);
+
         root.getChildren().addAll(holder);
 
         primaryStage.setScene(new Scene(root));
         primaryStage.show();
 
-        Map map = new Map();
-        map.drawMap(gc);
+        basicMap.drawMap();
 
-        saveButton.setOnMouseClicked(event -> {
+        terrainCheck.selectedProperty().addListener((ov, old_val, new_val) -> {
+            terrainMap.selected = new_val;
+            mapChange = true;
+        });
+
+        actionCheck.selectedProperty().addListener((ov, old_val, new_val) -> {
+            actionMap.selected = new_val;
+            mapChange = true;
+        });
+
+        saveItem.setOnAction(event -> {
             File file = fileChooser.showSaveDialog(primaryStage);
             try {
                 ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));
-                out.writeObject(map.map);
+                out.writeObject(mapData.getData());
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
 
-        openButton.setOnMouseClicked(event -> {
+        openItem.setOnAction(event -> {
             File file = fileChooser.showOpenDialog(primaryStage);
             try {
                 ObjectInputStream out = new ObjectInputStream(new FileInputStream(file));
-                map.loadMap((HashMap<Hexagon, HexData>) out.readObject());
 
-                map.clearMap(gc);
-                System.out.println(map);
-                map.drawMap(gc);
-
+                mapData.setData((HashMap<Hexagon, HexData>) out.readObject());
+                mapChange = true;
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
 
-        root.setOnMouseClicked(event -> {
-            Hexagon est = map.pixel_to_Hex(map.layout, new Point(event.getSceneX(), event.getSceneY()));
-
+        pane.setOnMouseClicked(event -> {
+            Hexagon est = mapData.pixel_to_Hex(new Point(event.getX(), event.getY()));
 
             switch (currentAction){
                 case Drawing:
-                    map.getHexData(est).setTerrain(currentDrawing);
-                    map.drawHex(map.hex_points(map.layout, est), gc, map.getHexData(est));
+                    mapData.getHexData(est).setTerrain(currentDrawing);
+                    mapChange = true;
                     break;
                 case Move:
-                    for(Hexagon neighbor : map.getNeighbors(est)){
-                        if(map.getHexData(neighbor).traversable){
-                            map.getHexData(neighbor).setModifier(currentModifier);
+                    mapData.getHexData(est).setModifier(currentModifier);
+                    for(Hexagon neighbor : mapData.getNeighbors(est)){
+                        if(mapData.getHexData(neighbor).traversable){
+                            mapData.getHexData(neighbor).setModifier(currentModifier);
                         }
-                        map.drawHex(map.hex_points(map.layout, neighbor), gc, map.getHexData(neighbor));
                     }
+                    mapChange = true;
+                    break;
             }
-
-
-
-
         });
+
+        new AnimationTimer(){
+
+            @Override
+            public void handle(long now) {
+                if(mapChange){
+                    gc.clearRect(0,0,1000,1000);
+                    gc2.clearRect(0,0,1000,1000);
+
+                    for(Map map : mapOrder){
+                        if(map.selected){
+                            map.drawMap();
+                        }
+                    }
+                    mapChange = false;
+                }
+            }
+        }.start();
     }
 }
