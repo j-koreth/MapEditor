@@ -8,10 +8,7 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -38,8 +35,6 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.initStyle(StageStyle.UNDECORATED);
-
         primaryStage.setTitle("Map Editor");
         FileChooser fileChooser = new FileChooser();
 
@@ -67,7 +62,6 @@ public class Main extends Application {
         Label actionTypes = new Label("Action Types");
         Button moveButton = new Button("Move");
         actionControls.getChildren().addAll(actionTypes, moveButton);
-
 
         terrainControls.setSpacing(10);
         terrainControls.setPadding(new Insets(10));
@@ -110,20 +104,21 @@ public class Main extends Application {
         CheckBox terrainCheck = new CheckBox("Terrain Map");
         CheckBox actionCheck = new CheckBox("Action Map");
 
-        BorderPane borderPane = new BorderPane();
-        Pane pane = new Pane();
-        pane.getChildren().add(canvas);
-        pane.getChildren().add(canvas2);
-        borderPane.setCenter(pane);
-        borderPane.setBottom(controls);
-
         MenuBar menuBar = new MenuBar();
         Menu menu = new Menu("File");
         MenuItem saveItem = new MenuItem("Save");
         MenuItem openItem = new MenuItem("Open");
         menu.getItems().addAll(saveItem, openItem);
-
         menuBar.getMenus().add(menu);
+
+        BorderPane borderPane = new BorderPane();
+        Pane pane = new Pane();
+        pane.getChildren().add(canvas);
+        pane.getChildren().add(canvas2);
+        borderPane.setTop(menuBar);
+        borderPane.setCenter(pane);
+        borderPane.setBottom(controls);
+
 
         holder.getChildren().addAll(menuBar, borderPane);
 

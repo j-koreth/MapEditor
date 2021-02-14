@@ -83,7 +83,6 @@ class ActionMap extends Map{
         double[] x = points.stream().mapToDouble(Point::getX).toArray();
         double[] y = points.stream().mapToDouble(Point::getY).toArray();
 
-
         if(hexData.modifier != null){
             switch (hexData.modifier){
                 case Move:
