@@ -9,11 +9,8 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,11 +35,14 @@ public class Main extends Application {
         primaryStage.setTitle("Map Editor");
         FileChooser fileChooser = new FileChooser();
 
-        Canvas canvas = new Canvas(980, 600);
-        GraphicsContext gc = canvas.getGraphicsContext2D();
+        Canvas basicCanvas = new Canvas(980, 600);
+        GraphicsContext basicGC = basicCanvas.getGraphicsContext2D();
 
-        Canvas canvas2  = new Canvas(980, 600);
-        GraphicsContext gc2 = canvas2.getGraphicsContext2D();
+        Canvas actionCanvas  = new Canvas(980, 600);
+        GraphicsContext actionGC = actionCanvas.getGraphicsContext2D();
+
+        Canvas infoCanvas = new Canvas(980, 600);
+        GraphicsContext infoGC = basicCanvas.getGraphicsContext2D();
 
         Group root = new Group();
         VBox holder = new VBox();
@@ -90,18 +90,21 @@ public class Main extends Application {
 
         MapData mapData = new MapData();
 
-        Map basicMap = new BasicMap(mapData, gc);
+        Map basicMap = new BasicMap(mapData, basicGC);
         basicMap.selected = true;
 
-        Map terrainMap = new TerrainMap(mapData, gc);
-        Map actionMap = new ActionMap(mapData, gc2);
+        Map terrainMap = new TerrainMap(mapData, basicGC);
+        Map hexInfoMap = new HexInfoMap(mapData, infoGC);
+        Map actionMap = new ActionMap(mapData, actionGC);
 
         ArrayList<Map> mapOrder = new ArrayList<>();
         mapOrder.add(basicMap);
         mapOrder.add(terrainMap);
+        mapOrder.add(hexInfoMap);
         mapOrder.add(actionMap);
 
         CheckBox terrainCheck = new CheckBox("Terrain Map");
+        CheckBox hexInfoCheck = new CheckBox("Hex Info Map");
         CheckBox actionCheck = new CheckBox("Action Map");
 
         MenuBar menuBar = new MenuBar();
@@ -113,8 +116,10 @@ public class Main extends Application {
 
         BorderPane borderPane = new BorderPane();
         Pane pane = new Pane();
-        pane.getChildren().add(canvas);
-        pane.getChildren().add(canvas2);
+        pane.getChildren().add(basicCanvas);
+        pane.getChildren().add(actionCanvas);
+        pane.getChildren().add(infoCanvas);
+
         borderPane.setTop(menuBar);
         borderPane.setCenter(pane);
         borderPane.setBottom(controls);
@@ -122,7 +127,7 @@ public class Main extends Application {
 
         holder.getChildren().addAll(menuBar, borderPane);
 
-        VBox mapTypesBox = new VBox(terrainCheck, actionCheck);
+        VBox mapTypesBox = new VBox(terrainCheck, actionCheck, hexInfoCheck);
         mapTypesBox.setSpacing(20);
         mapTypesBox.setPadding(new Insets(20));
 
@@ -145,6 +150,11 @@ public class Main extends Application {
             mapChange = true;
         });
 
+        hexInfoCheck.selectedProperty().addListener((ov, old_val, new_val) -> {
+            hexInfoMap.selected = new_val;
+            mapChange = true;
+        });
+
         saveItem.setOnAction(event -> {
             File file = fileChooser.showSaveDialog(primaryStage);
             try {
@@ -159,7 +169,6 @@ public class Main extends Application {
             File file = fileChooser.showOpenDialog(primaryStage);
             try {
                 ObjectInputStream out = new ObjectInputStream(new FileInputStream(file));
-
                 mapData.setData((HashMap<Hexagon, HexData>) out.readObject());
                 mapChange = true;
             } catch (Exception e) {
@@ -188,12 +197,12 @@ public class Main extends Application {
         });
 
         new AnimationTimer(){
-
             @Override
             public void handle(long now) {
                 if(mapChange){
-                    gc.clearRect(0,0,1000,1000);
-                    gc2.clearRect(0,0,1000,1000);
+                    basicGC.clearRect(0,0,1000,1000);
+                    infoGC.clearRect(0,0,1000,1000);
+                    actionGC.clearRect(0,0,1000,1000);
 
                     for(Map map : mapOrder){
                         if(map.selected){

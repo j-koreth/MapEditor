@@ -17,8 +17,6 @@ abstract class Map {
     }
 
     public void drawMap(){
-        gc.clearRect(0,0,1000,1000);
-
         for(HashMap.Entry<Hexagon, HexData> entry: mapData.data.entrySet()){
             drawHex(mapData.hex_points(entry.getKey()), entry.getValue());
         }
@@ -94,6 +92,29 @@ class ActionMap extends Map{
             }
         }
     }
+}
+
+class HexInfoMap extends Map{
+    public HexInfoMap(MapData mapData, GraphicsContext gc) {
+        super(mapData, gc);
+    }
+
+    @Override
+    public void drawMap() {
+        for(HashMap.Entry<Hexagon, HexData> entry: mapData.data.entrySet()){
+            drawHex(entry.getKey(), mapData.hex_to_pixel(entry.getKey()));
+        }
+    }
+
+    public void drawHex(Hexagon a, Point center){
+        gc.setFill(Color.BLACK);
+        gc.fillText("" + a.x, center.getX() - 14, center.getY()  - 6);
+        gc.fillText("" + a.y, center.getX() + 6 , center.getY() + 5);
+        gc.fillText("" + a.z, center.getX() - 14 , center.getY() + 14);
+    }
+
+    @Override
+    public void drawHex(List<Point> points, HexData hexData){}
 }
 
 class PoliticalMap extends Map{
