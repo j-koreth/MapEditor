@@ -2,8 +2,6 @@ package map;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-
-import java.io.Serializable;
 import java.util.*;
 
 abstract class Map {
@@ -118,11 +116,23 @@ class HexInfoMap extends Map{
 }
 
 class PoliticalMap extends Map{
-    public PoliticalMap(MapData mapData, GraphicsContext gc) {
+    HashMap<State, String> states;
+
+    public PoliticalMap(MapData mapData, GraphicsContext gc, ArrayList<State> createdStates) {
         super(mapData, gc);
+        states = new HashMap<>();
     }
 
     @Override
     public void drawHex(List<Point> points, HexData hexData){
+        double[] x = points.stream().mapToDouble(Point::getX).toArray();
+        double[] y = points.stream().mapToDouble(Point::getY).toArray();
+
+        if(hexData.ownedState != null){
+            gc.setStroke(hexData.ownedState.color);
+            gc.setFill(hexData.ownedState.color);
+            gc.fillPolygon(x, y, 6);
+            gc.strokePolygon(x, y, 6);
+        }
     }
 }

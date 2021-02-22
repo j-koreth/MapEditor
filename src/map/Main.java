@@ -8,19 +8,28 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Main extends Application {
 
-    enum Action {Drawing, Move}
+    enum Action {TerrainDrawing, Move, PoliticalDrawing}
     Action currentAction;
 
-    HexData.TerrainType currentDrawing = HexData.TerrainType.Ocean;
+    HexData.TerrainType currentTerrain = HexData.TerrainType.Ocean;
+    State currentState;
+
     HexData.Modifier currentModifier = HexData.Modifier.Move;
 
     boolean mapChange = false;
@@ -38,11 +47,11 @@ public class Main extends Application {
         Canvas basicCanvas = new Canvas(980, 600);
         GraphicsContext basicGC = basicCanvas.getGraphicsContext2D();
 
-        Canvas actionCanvas  = new Canvas(980, 600);
+        Canvas actionCanvas = new Canvas(980, 600);
         GraphicsContext actionGC = actionCanvas.getGraphicsContext2D();
 
-        Canvas infoCanvas = new Canvas(980, 600);
-        GraphicsContext infoGC = basicCanvas.getGraphicsContext2D();
+        Canvas politicalCanvas = new Canvas(980, 600);
+        GraphicsContext politicalGC = actionCanvas.getGraphicsContext2D();
 
         Group root = new Group();
         VBox holder = new VBox();
@@ -50,8 +59,9 @@ public class Main extends Application {
         VBox controls = new VBox();
         HBox terrainControls = new HBox();
         HBox actionControls = new HBox();
+        HBox politicalControls = new HBox();
 
-        controls.getChildren().addAll(terrainControls, actionControls);
+        controls.getChildren().addAll(terrainControls, actionControls, politicalControls);
 
         Label tileTypes = new Label("Tile Types");
         Button oceanButton = new Button("Ocean");
@@ -63,29 +73,61 @@ public class Main extends Application {
         Button moveButton = new Button("Move");
         actionControls.getChildren().addAll(actionTypes, moveButton);
 
+        Label politicalTypes = new Label("States");
+        Button romanButton = new Button("Roman Empire");
+        Button hanButton = new Button("Han Dynasty");
+        Button parthianButton = new Button("Parthian Empire");
+
+        politicalControls.getChildren().addAll(politicalTypes, romanButton, hanButton, parthianButton);
+
+
         terrainControls.setSpacing(10);
         terrainControls.setPadding(new Insets(10));
 
         actionControls.setSpacing(10);
         actionControls.setPadding(new Insets(10));
 
+        politicalControls.setSpacing(10);
+        politicalControls.setPadding(new Insets(10));
+
         oceanButton.setOnMouseClicked(event -> {
-            currentAction = Action.Drawing;
-            currentDrawing = HexData.TerrainType.Ocean;
+            currentAction = Action.TerrainDrawing;
+            currentTerrain = HexData.TerrainType.Ocean;
         });
 
         landButton.setOnMouseClicked(event -> {
-            currentAction = Action.Drawing;
-            currentDrawing = HexData.TerrainType.Land;
+            currentAction = Action.TerrainDrawing;
+            currentTerrain = HexData.TerrainType.Land;
         });
 
         lakebutton.setOnMouseClicked(event -> {
-            currentAction = Action.Drawing;
-            currentDrawing = HexData.TerrainType.Lake;
+            currentAction = Action.TerrainDrawing;
+            currentTerrain = HexData.TerrainType.Lake;
         });
 
         moveButton.setOnMouseClicked(event -> {
             currentAction = Action.Move;
+        });
+
+
+        ArrayList<State> states = new ArrayList<>();
+        State romanEmpire = new State("Roman Empire", Color.rgb(102, 2,60));
+        State hanDynasty = new State("Han Empire", Color.rgb(0,49,191	));
+        State parthianEmpire = new State("Parthian Empire", Color.YELLOW);
+
+        romanButton.setOnMouseClicked(event -> {
+            currentAction = Action.PoliticalDrawing;
+            currentState = romanEmpire;
+        });
+
+        hanButton.setOnMouseClicked(event -> {
+            currentAction = Action.PoliticalDrawing;
+            currentState = hanDynasty;
+        });
+
+        parthianButton.setOnMouseClicked(event -> {
+            currentAction = Action.PoliticalDrawing;
+            currentState = parthianEmpire;
         });
 
         MapData mapData = new MapData();
@@ -94,18 +136,23 @@ public class Main extends Application {
         basicMap.selected = true;
 
         Map terrainMap = new TerrainMap(mapData, basicGC);
-        Map hexInfoMap = new HexInfoMap(mapData, infoGC);
+        Map hexInfoMap = new HexInfoMap(mapData, basicGC);
         Map actionMap = new ActionMap(mapData, actionGC);
+        Map politicalMap = new PoliticalMap(mapData, politicalGC, states);
+
+        mapChange = true;
 
         ArrayList<Map> mapOrder = new ArrayList<>();
         mapOrder.add(basicMap);
         mapOrder.add(terrainMap);
         mapOrder.add(hexInfoMap);
         mapOrder.add(actionMap);
+        mapOrder.add(politicalMap);
 
         CheckBox terrainCheck = new CheckBox("Terrain Map");
         CheckBox hexInfoCheck = new CheckBox("Hex Info Map");
         CheckBox actionCheck = new CheckBox("Action Map");
+        CheckBox politicalCheck = new CheckBox("Political Map");
 
         MenuBar menuBar = new MenuBar();
         Menu menu = new Menu("File");
@@ -118,16 +165,15 @@ public class Main extends Application {
         Pane pane = new Pane();
         pane.getChildren().add(basicCanvas);
         pane.getChildren().add(actionCanvas);
-        pane.getChildren().add(infoCanvas);
+        pane.getChildren().add(politicalCanvas);
 
         borderPane.setTop(menuBar);
         borderPane.setCenter(pane);
         borderPane.setBottom(controls);
 
-
         holder.getChildren().addAll(menuBar, borderPane);
 
-        VBox mapTypesBox = new VBox(terrainCheck, actionCheck, hexInfoCheck);
+        VBox mapTypesBox = new VBox(terrainCheck, actionCheck, hexInfoCheck, politicalCheck);
         mapTypesBox.setSpacing(20);
         mapTypesBox.setPadding(new Insets(20));
 
@@ -137,8 +183,6 @@ public class Main extends Application {
 
         primaryStage.setScene(new Scene(root));
         primaryStage.show();
-
-        basicMap.drawMap();
 
         terrainCheck.selectedProperty().addListener((ov, old_val, new_val) -> {
             terrainMap.selected = new_val;
@@ -152,6 +196,11 @@ public class Main extends Application {
 
         hexInfoCheck.selectedProperty().addListener((ov, old_val, new_val) -> {
             hexInfoMap.selected = new_val;
+            mapChange = true;
+        });
+
+        politicalCheck.selectedProperty().addListener((ov, old_val, new_val) -> {
+            politicalMap.selected = new_val;
             mapChange = true;
         });
 
@@ -179,20 +228,31 @@ public class Main extends Application {
         pane.setOnMouseClicked(event -> {
             Hexagon est = mapData.pixel_to_Hex(new Point(event.getX(), event.getY()));
 
-            switch (currentAction){
-                case Drawing:
-                    mapData.getHexData(est).setTerrain(currentDrawing);
-                    mapChange = true;
-                    break;
-                case Move:
-                    mapData.getHexData(est).setModifier(currentModifier);
-                    for(Hexagon neighbor : mapData.getNeighbors(est)){
-                        if(mapData.getHexData(neighbor).traversable){
-                            mapData.getHexData(neighbor).setModifier(currentModifier);
+            if(currentAction != null){
+                switch (currentAction){
+                    case TerrainDrawing:
+                        mapData.getHexData(est).setTerrain(currentTerrain);
+                        mapChange = true;
+                        break;
+                    case Move:
+                        mapData.getHexData(est).setModifier(currentModifier);
+                        for(Hexagon neighbor : mapData.getNeighbors(est)){
+                            if(mapData.getHexData(neighbor).traversable){
+                                mapData.getHexData(neighbor).setModifier(currentModifier);
+                            }
                         }
-                    }
-                    mapChange = true;
-                    break;
+                        mapChange = true;
+                        break;
+                    case PoliticalDrawing:
+                        if(mapData.getHexData(est).ownedState == null){
+                            mapData.getHexData(est).setOwnedState(currentState);
+                        }
+                        else{
+                            mapData.getHexData(est).ownedState = null;
+                        }
+                        mapChange = true;
+                        break;
+                }
             }
         });
 
@@ -201,8 +261,8 @@ public class Main extends Application {
             public void handle(long now) {
                 if(mapChange){
                     basicGC.clearRect(0,0,1000,1000);
-                    infoGC.clearRect(0,0,1000,1000);
                     actionGC.clearRect(0,0,1000,1000);
+                    politicalGC.clearRect(0,0,1000,1000);
 
                     for(Map map : mapOrder){
                         if(map.selected){

@@ -11,6 +11,8 @@ public class HexData implements Serializable {
     enum Modifier {Move}
     Modifier modifier;
 
+    State ownedState;
+
     public HexData() {
         type = TerrainType.Ocean;
 
@@ -34,5 +36,20 @@ public class HexData implements Serializable {
 
     public void setModifier(Modifier modifier){
         this.modifier = modifier;
+    }
+
+    public void setOwnedState(State state){
+        this.ownedState = state;
+    }
+
+    @Override
+    public String toString() {
+        return "HexData{" +
+                "traversable=" + traversable +
+                ", terraincost=" + terraincost +
+                ", type=" + type +
+                ", modifier=" + modifier +
+                ", ownedState=" + ownedState +
+                '}';
     }
 }
