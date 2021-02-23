@@ -3,53 +3,43 @@ package map;
 import java.io.Serializable;
 
 public class HexData implements Serializable {
-    boolean traversable;
-    int terraincost;
-    enum TerrainType {Ocean, Land, Lake}
-    TerrainType type;
+    Terrain terrain;
+    State state;
+    Building building;
 
-    enum Modifier {Move}
-    Modifier modifier;
-
-    State ownedState;
-
-    public HexData() {
-        type = TerrainType.Ocean;
-
-        this.traversable = false;
-        this.terraincost = 1;
-    }
-
-    public void setTerrain(TerrainType type){
-        switch (type){
-            case Lake:
-            case Ocean:
-                this.type = type;
-                traversable = false;
-                break;
-            case Land:
-                this.type = type;
-                traversable = true;
-                break;
+    public void setTerrain(Terrain terrain){
+        if(this.terrain == terrain){
+            this.terrain = null;
+        }
+        else{
+            this.terrain = terrain;
         }
     }
 
-    public void setModifier(Modifier modifier){
-        this.modifier = modifier;
+    public void setState(State state){
+        if(this.state == state){
+            this.state = null;
+        }
+        else{
+            this.state = state;
+        }
     }
 
-    public void setOwnedState(State state){
-        this.ownedState = state;
+    public void setBuilding(Building building) {
+        if(this.building == building){
+            this.building = null;
+        }
+        else{
+            this.building = building;
+        }
     }
 
     @Override
     public String toString() {
         return "HexData{" +
-                "traversable=" + traversable +
-                ", terraincost=" + terraincost +
-                ", type=" + type +
-                ", modifier=" + modifier +
-                ", ownedState=" + ownedState +
+                "terrain=" + terrain +
+                ", state=" + state +
+                ", building=" + building +
                 '}';
     }
 }

@@ -1,18 +1,15 @@
 package map;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class MapData implements Serializable {
+public class MapData {
     HashMap<Hexagon, HexData> data;
     Orientation layout_pointy = new Orientation(Math.sqrt(3.0), Math.sqrt(3.0) / 2.0, 0.0, 3.0 / 2.0,  Math.sqrt(3.0) / 3.0, -1.0 / 3.0, 0.0, 2.0 / 3.0, 0.5);
     List<Hexagon> directions = Arrays.asList(new Hexagon(1,0), new Hexagon(1,-1), new Hexagon(0,-1), new Hexagon(-1,0), new Hexagon(-1,1), new Hexagon(0,1));
     Layout layout = new Layout(layout_pointy, new Point(25,25), new Point(25,25));
-
-    Point origin;
 
     public MapData(){
         data = new HashMap<>();
@@ -48,7 +45,7 @@ public class MapData implements Serializable {
         return new Point(size.x * Math.cos(angle), size.y * Math.sin(angle));
     }
 
-    List<Point> hex_points(Hexagon h) {
+    List<Point> getPoints(Hexagon h) {
         List<Point> corners = new ArrayList<>();
         Point center = hex_to_pixel(h);
         for (int i = 0; i < 6; i++) {
@@ -58,7 +55,7 @@ public class MapData implements Serializable {
         return corners;
     }
 
-    Hexagon pixel_to_Hex(Point p){
+    Hexagon pixelToHex(Point p){
         Orientation M = layout.orientation;
 
         Point pt = new Point((p.getX() - layout.origin.x) / layout.size.x,
@@ -94,6 +91,10 @@ public class MapData implements Serializable {
         return length(subtract(a,b));
     }
 
+    public boolean getIfHexExists(Hexagon a){
+        return data.containsKey(a);
+    }
+
     public Hexagon neighbor(Hexagon a, int direction){
         return add(a, directions.get(direction));
     }
@@ -101,8 +102,41 @@ public class MapData implements Serializable {
     public ArrayList<Hexagon> getNeighbors(Hexagon a){
         ArrayList<Hexagon> neighbors = new ArrayList<>();
         for(int x = 0; x < 6; x++){
-            neighbors.add(neighbor(a, x));
+            if(getIfHexExists(neighbor(a, x))){
+                neighbors.add(neighbor(a, x));
+            }
         }
         return neighbors;
+    }
+
+    public static class Layout {
+        Orientation orientation;
+        Point size;
+        Point origin;
+
+        public Layout(Orientation orientation, Point size, Point origin) {
+            this.orientation = orientation;
+            this.size = size;
+            this.origin = origin;
+        }
+    }
+
+    public static class Orientation {
+        double f0, f1, f2, f3;
+        double b0, b1, b2, b3;
+
+        double start_angle;
+
+        public Orientation(double f0, double f1, double f2, double f3, double b0, double b1, double b2, double b3, double start_angle) {
+            this.f0 = f0;
+            this.f1 = f1;
+            this.f2 = f2;
+            this.f3 = f3;
+            this.b0 = b0;
+            this.b1 = b1;
+            this.b2 = b2;
+            this.b3 = b3;
+            this.start_angle = start_angle;
+        }
     }
 }

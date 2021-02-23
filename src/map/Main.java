@@ -3,7 +3,6 @@ package map;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.geometry.Insets;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -14,7 +13,6 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -24,136 +22,130 @@ import java.util.HashMap;
 
 public class Main extends Application {
 
-    enum Action {TerrainDrawing, Move, PoliticalDrawing}
+    enum Action {TerrainDrawing, Move, PoliticalDrawing, BuildingDraw}
     Action currentAction;
 
-    HexData.TerrainType currentTerrain = HexData.TerrainType.Ocean;
-    State currentState;
+    HexType currentType;
 
-    HexData.Modifier currentModifier = HexData.Modifier.Move;
-
-    boolean mapChange = false;
+    boolean mapChange = true;
 
     public static void main(String[] args) {
         launch(args);
     }
 
+    public void addType(HBox controls, HexType type, Action action){
+        Button button = new Button(type.getName());
+        button.setOnMouseClicked(event -> {
+            currentAction = action;
+            currentType = type;
+        });
+
+        controls.getChildren().add(button);
+    }
+
+    public void setUpTerrains(HBox terrainControls){
+        addType(terrainControls, new Terrain("Ocean", "#2273B8"), Action.TerrainDrawing);
+        addType(terrainControls, new Terrain("Land", 1, "#F2CB84"), Action.TerrainDrawing);
+        addType(terrainControls, new Terrain("Lake", "#8CC4DB"), Action.TerrainDrawing);
+        addType(terrainControls, new Terrain("Forest", 2, "#558B29"), Action.TerrainDrawing);
+        addType(terrainControls, new Terrain("Desert", 4, "#DE8D3A"), Action.TerrainDrawing);
+    }
+
+    public void setUpStates(HBox politicalControls){
+        addType(politicalControls, new State("Roman Empire", "#66023C") ,Action.PoliticalDrawing);
+        addType(politicalControls, new State("Han Empire", "#0031BF") ,Action.PoliticalDrawing);
+        addType(politicalControls, new State("Parthian Empire", "#9ACD32") ,Action.PoliticalDrawing);
+    }
+
+    public void setUpBuildings(HBox buildingControls){
+        addType(buildingControls, new Building("Trade Post"), Action.BuildingDraw);
+        addType(buildingControls, new Building("City", Building.Shape.Square), Action.BuildingDraw);
+    }
+
+    public void setUpControls(HBox controls){
+        controls.setSpacing(10);
+        controls.setPadding(new Insets(10));
+    }
 
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Map Editor");
-        FileChooser fileChooser = new FileChooser();
 
+        VBox holder = new VBox();
+        BorderPane borderPane = new BorderPane();
+
+        //Basic Canvas holding Terrain, Basic Map, and HexInfo Map
         Canvas basicCanvas = new Canvas(980, 600);
         GraphicsContext basicGC = basicCanvas.getGraphicsContext2D();
 
+        //Action Canvas holding movement Actions
         Canvas actionCanvas = new Canvas(980, 600);
         GraphicsContext actionGC = actionCanvas.getGraphicsContext2D();
 
+        //Political Canvas holding States
         Canvas politicalCanvas = new Canvas(980, 600);
-        GraphicsContext politicalGC = actionCanvas.getGraphicsContext2D();
+        GraphicsContext politicalGC = politicalCanvas.getGraphicsContext2D();
 
-        Group root = new Group();
-        VBox holder = new VBox();
-
+        //Bottom Controls
         VBox controls = new VBox();
-        HBox terrainControls = new HBox();
+        HBox terrainControls = new HBox(new Label("Terrain Types"));
+        HBox politicalControls = new HBox(new Label("States"));
+        HBox buildingControls = new HBox(new Label("Building Types"));
         HBox actionControls = new HBox();
-        HBox politicalControls = new HBox();
 
-        controls.getChildren().addAll(terrainControls, actionControls, politicalControls);
+        controls.getChildren().addAll(terrainControls, actionControls, politicalControls, buildingControls);
 
-        Label tileTypes = new Label("Tile Types");
-        Button oceanButton = new Button("Ocean");
-        Button landButton = new Button("Land");
-        Button lakebutton = new Button("Lake");
-        terrainControls.getChildren().addAll(tileTypes, oceanButton, landButton, lakebutton);
+        //Terrain
+        setUpTerrains(terrainControls);
+        setUpControls(terrainControls);
 
+        //Action Buttons
         Label actionTypes = new Label("Action Types");
         Button moveButton = new Button("Move");
         actionControls.getChildren().addAll(actionTypes, moveButton);
+        setUpControls(actionControls);
 
-        Label politicalTypes = new Label("States");
-        Button romanButton = new Button("Roman Empire");
-        Button hanButton = new Button("Han Dynasty");
-        Button parthianButton = new Button("Parthian Empire");
+        //Painting States Buttons
+        setUpStates(politicalControls);
+        setUpControls(politicalControls);
 
-        politicalControls.getChildren().addAll(politicalTypes, romanButton, hanButton, parthianButton);
+        //Painting Trading Nodes Buttons
+        setUpBuildings(buildingControls);
+        setUpControls(buildingControls);
 
-
-        terrainControls.setSpacing(10);
-        terrainControls.setPadding(new Insets(10));
-
-        actionControls.setSpacing(10);
-        actionControls.setPadding(new Insets(10));
-
-        politicalControls.setSpacing(10);
-        politicalControls.setPadding(new Insets(10));
-
-        oceanButton.setOnMouseClicked(event -> {
-            currentAction = Action.TerrainDrawing;
-            currentTerrain = HexData.TerrainType.Ocean;
-        });
-
-        landButton.setOnMouseClicked(event -> {
-            currentAction = Action.TerrainDrawing;
-            currentTerrain = HexData.TerrainType.Land;
-        });
-
-        lakebutton.setOnMouseClicked(event -> {
-            currentAction = Action.TerrainDrawing;
-            currentTerrain = HexData.TerrainType.Lake;
-        });
-
+        //Action Buttons
         moveButton.setOnMouseClicked(event -> {
             currentAction = Action.Move;
         });
 
-
-        ArrayList<State> states = new ArrayList<>();
-        State romanEmpire = new State("Roman Empire", Color.rgb(102, 2,60));
-        State hanDynasty = new State("Han Empire", Color.rgb(0,49,191	));
-        State parthianEmpire = new State("Parthian Empire", Color.YELLOW);
-
-        romanButton.setOnMouseClicked(event -> {
-            currentAction = Action.PoliticalDrawing;
-            currentState = romanEmpire;
-        });
-
-        hanButton.setOnMouseClicked(event -> {
-            currentAction = Action.PoliticalDrawing;
-            currentState = hanDynasty;
-        });
-
-        parthianButton.setOnMouseClicked(event -> {
-            currentAction = Action.PoliticalDrawing;
-            currentState = parthianEmpire;
-        });
-
         MapData mapData = new MapData();
 
+        //Always Will be rendered basically
         Map basicMap = new BasicMap(mapData, basicGC);
         basicMap.selected = true;
 
-        Map terrainMap = new TerrainMap(mapData, basicGC);
-        Map hexInfoMap = new HexInfoMap(mapData, basicGC);
-        Map actionMap = new ActionMap(mapData, actionGC);
-        Map politicalMap = new PoliticalMap(mapData, politicalGC, states);
-
-        mapChange = true;
+        TerrainMap terrainMap = new TerrainMap(mapData, basicGC);
+        HexInfoMap hexInfoMap = new HexInfoMap(mapData, basicGC);
+        ActionMap actionMap = new ActionMap(mapData, actionGC);
+        PoliticalMap politicalMap = new PoliticalMap(mapData, politicalGC);
+        BuildingMap buildingMap = new BuildingMap(mapData, basicGC);
 
         ArrayList<Map> mapOrder = new ArrayList<>();
         mapOrder.add(basicMap);
         mapOrder.add(terrainMap);
-        mapOrder.add(hexInfoMap);
+        mapOrder.add(buildingMap);
         mapOrder.add(actionMap);
         mapOrder.add(politicalMap);
+        mapOrder.add(hexInfoMap);
 
+        //Map Type Checkboxes
         CheckBox terrainCheck = new CheckBox("Terrain Map");
         CheckBox hexInfoCheck = new CheckBox("Hex Info Map");
         CheckBox actionCheck = new CheckBox("Action Map");
         CheckBox politicalCheck = new CheckBox("Political Map");
+        CheckBox buildingCheck = new CheckBox("Building Map");
 
+        //MenuBar
         MenuBar menuBar = new MenuBar();
         Menu menu = new Menu("File");
         MenuItem saveItem = new MenuItem("Save");
@@ -161,49 +153,53 @@ public class Main extends Application {
         menu.getItems().addAll(saveItem, openItem);
         menuBar.getMenus().add(menu);
 
-        BorderPane borderPane = new BorderPane();
+        //Adding Canvases to BorderPane
         Pane pane = new Pane();
-        pane.getChildren().add(basicCanvas);
-        pane.getChildren().add(actionCanvas);
-        pane.getChildren().add(politicalCanvas);
+        pane.getChildren().addAll(basicCanvas, actionCanvas, politicalCanvas);
 
-        borderPane.setTop(menuBar);
-        borderPane.setCenter(pane);
-        borderPane.setBottom(controls);
-
-        holder.getChildren().addAll(menuBar, borderPane);
-
-        VBox mapTypesBox = new VBox(terrainCheck, actionCheck, hexInfoCheck, politicalCheck);
+        //Adding Checkboxes to a VBox on Right
+        VBox mapTypesBox = new VBox(terrainCheck, actionCheck, hexInfoCheck, politicalCheck, buildingCheck);
         mapTypesBox.setSpacing(20);
         mapTypesBox.setPadding(new Insets(20));
 
+        //Setting BorderPane
+        borderPane.setTop(menuBar);
+        borderPane.setCenter(pane);
+        borderPane.setBottom(controls);
         borderPane.setRight(mapTypesBox);
 
-        root.getChildren().addAll(holder);
+        //Adding MenuBar and BorderPane to a VBox Holder
+        holder.getChildren().addAll(menuBar, borderPane);
 
-        primaryStage.setScene(new Scene(root));
-        primaryStage.show();
-
-        terrainCheck.selectedProperty().addListener((ov, old_val, new_val) -> {
-            terrainMap.selected = new_val;
+        //Map Checkbox Listeners
+        terrainCheck.selectedProperty().addListener((ov, old, newValue) -> {
+            terrainMap.selected = newValue;
             mapChange = true;
         });
 
-        actionCheck.selectedProperty().addListener((ov, old_val, new_val) -> {
-            actionMap.selected = new_val;
+        actionCheck.selectedProperty().addListener((ov, old, newValue) -> {
+            actionMap.selected = newValue;
             mapChange = true;
         });
 
-        hexInfoCheck.selectedProperty().addListener((ov, old_val, new_val) -> {
-            hexInfoMap.selected = new_val;
+        hexInfoCheck.selectedProperty().addListener((ov, old, newValue) -> {
+            hexInfoMap.selected = newValue;
             mapChange = true;
         });
 
-        politicalCheck.selectedProperty().addListener((ov, old_val, new_val) -> {
-            politicalMap.selected = new_val;
+        politicalCheck.selectedProperty().addListener((ov, old, newValue) -> {
+            politicalMap.selected = newValue;
             mapChange = true;
         });
 
+        buildingCheck.selectedProperty().addListener((ov, old, newValue) -> {
+            buildingMap.selected = newValue;
+            mapChange = true;
+        });
+
+        FileChooser fileChooser = new FileChooser();
+
+        //Save Data
         saveItem.setOnAction(event -> {
             File file = fileChooser.showSaveDialog(primaryStage);
             try {
@@ -214,6 +210,7 @@ public class Main extends Application {
             }
         });
 
+        //Loading Data
         openItem.setOnAction(event -> {
             File file = fileChooser.showOpenDialog(primaryStage);
             try {
@@ -225,44 +222,45 @@ public class Main extends Application {
             }
         });
 
+        for(HashMap.Entry<Hexagon, HexData> entry : mapData.data.entrySet()){
+            entry.getValue().setTerrain(new Terrain("Ocean", "#2273B8"));
+        }
+
         pane.setOnMouseClicked(event -> {
-            Hexagon est = mapData.pixel_to_Hex(new Point(event.getX(), event.getY()));
+            Hexagon est = mapData.pixelToHex(new Point(event.getX(), event.getY()));
 
             if(currentAction != null){
                 switch (currentAction){
                     case TerrainDrawing:
-                        mapData.getHexData(est).setTerrain(currentTerrain);
-                        mapChange = true;
+                        mapData.getHexData(est).setTerrain((Terrain) currentType);
                         break;
                     case Move:
-                        mapData.getHexData(est).setModifier(currentModifier);
-                        for(Hexagon neighbor : mapData.getNeighbors(est)){
-                            if(mapData.getHexData(neighbor).traversable){
-                                mapData.getHexData(neighbor).setModifier(currentModifier);
-                            }
-                        }
-                        mapChange = true;
+                        actionMap.setMovable(est, 4);
                         break;
                     case PoliticalDrawing:
-                        if(mapData.getHexData(est).ownedState == null){
-                            mapData.getHexData(est).setOwnedState(currentState);
-                        }
-                        else{
-                            mapData.getHexData(est).ownedState = null;
-                        }
-                        mapChange = true;
+                        mapData.getHexData(est).setState((State) currentType);
+                        break;
+                    case BuildingDraw:
+                        mapData.getHexData(est).setBuilding((Building) currentType);
+                        System.out.println(est);
+                        System.out.println(mapData.getHexData(est));
                         break;
                 }
+                mapChange = true;
+
             }
         });
+
+        primaryStage.setScene(new Scene(holder));
+        primaryStage.show();
 
         new AnimationTimer(){
             @Override
             public void handle(long now) {
                 if(mapChange){
-                    basicGC.clearRect(0,0,1000,1000);
-                    actionGC.clearRect(0,0,1000,1000);
-                    politicalGC.clearRect(0,0,1000,1000);
+                    basicGC.clearRect(0,0, basicCanvas.getWidth(), basicCanvas.getHeight());
+                    actionGC.clearRect(0,0, actionCanvas.getWidth(), actionCanvas.getHeight());
+                    politicalGC.clearRect(0,0, politicalCanvas.getWidth(), politicalCanvas.getHeight());
 
                     for(Map map : mapOrder){
                         if(map.selected){

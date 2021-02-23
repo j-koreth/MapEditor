@@ -1,8 +1,6 @@
 package map;
 
-import java.io.Serializable;
-
-public class Point implements Serializable {
+public class Point {
     double x;
     double y;
 
