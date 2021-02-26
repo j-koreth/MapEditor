@@ -190,7 +190,5 @@ class BuildingMap extends Map{
                 gc.fillOval(center.getX() - 8, center.getY() - 8, 16, 16);
                 break;
         }
-
-
     }
 }

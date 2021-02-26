@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.Objects;
 
 public class Hexagon implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     int x, y, z;
 
     public Hexagon(int x, int y) {

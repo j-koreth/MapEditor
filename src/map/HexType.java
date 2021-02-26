@@ -3,14 +3,15 @@ package map;
 import java.io.Serializable;
 import java.util.Objects;
 
-public interface HexType {
-    String getName();
-    String getStrokeColor();
-    String getFillColor();
+public abstract class HexType {
+    private static final long serialVersionUID = 1L;
 
+    abstract String getName();
+    abstract String getStrokeColor();
+    abstract String getFillColor();
 }
 
-class Terrain implements Serializable, HexType {
+class Terrain extends HexType implements Serializable {
     String name;
     private int terrainCost;
     boolean traversable;
@@ -72,7 +73,7 @@ class Terrain implements Serializable, HexType {
     }
 }
 
-class State implements Serializable, HexType {
+class State extends HexType implements Serializable {
     String name;
     String hexCode;
 
@@ -119,7 +120,7 @@ class State implements Serializable, HexType {
 }
 
 
-class Building implements Serializable, HexType {
+class Building extends HexType implements Serializable {
     String name;
 
     enum Shape {Circle, Square}
@@ -149,5 +150,30 @@ class Building implements Serializable, HexType {
     @Override
     public String getFillColor() {
         return "#000000";
+    }
+
+    @Override
+    public String toString() {
+        return "Building{" +
+                "name='" + name + '\'' +
+                ", shape=" + shape +
+                '}';
+    }
+}
+
+class Player extends HexType implements Serializable {
+    @Override
+    String getName() {
+        return "Player";
+    }
+
+    @Override
+    String getStrokeColor() {
+        return "#E90D15";
+    }
+
+    @Override
+    String getFillColor() {
+        return "#E90D15";
     }
 }

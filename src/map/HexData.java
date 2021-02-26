@@ -3,9 +3,11 @@ package map;
 import java.io.Serializable;
 
 public class HexData implements Serializable {
+    private static final long serialVersionUID = 1L;
     Terrain terrain;
     State state;
     Building building;
+    Player player;
 
     public void setTerrain(Terrain terrain){
         if(this.terrain == terrain){
@@ -31,6 +33,15 @@ public class HexData implements Serializable {
         }
         else{
             this.building = building;
+        }
+    }
+
+    public void setPlayer(Player player) {
+        if(this.player == player){
+            this.player = null;
+        }
+        else{
+            this.player = player;
         }
     }
 
