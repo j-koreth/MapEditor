@@ -87,11 +87,11 @@ class PoliticalMap extends BasicMap{
 }
 
 class ActionMap extends BasicMap{
-    HashSet<Hexagon> movable;
+    HashMap<Hexagon, Integer> movable;
 
     public ActionMap(MapData mapData, GraphicsContext gc) {
         super(mapData, gc);
-        gc.setGlobalAlpha(.5);
+        gc.setGlobalAlpha(.8);
         type = new HexType() {
             @Override
             public String getName() {
@@ -100,24 +100,22 @@ class ActionMap extends BasicMap{
 
             @Override
             public String getStrokeColor() {
-                return "#BFBFBF";
+                return "#000000";
             }
 
             @Override
             public String getFillColor() {
-                return "#BFBFBF";
+                return "#000000";
             }
         };
     }
 
     public void setMovable(Hexagon a, int maxRange){
-        movable = new HashSet<>();
         LinkedList<Hexagon> frontier = new LinkedList<>();
         frontier.add(a);
 
-        HashMap<Hexagon, Integer> cost_so_far = new HashMap<>();
-        movable.add(a);
-        cost_so_far.put(a, 0);
+        movable = new HashMap<>();
+        movable.put(a, 0);
 
         while(!frontier.isEmpty()){
             Hexagon current = frontier.remove();
@@ -125,23 +123,31 @@ class ActionMap extends BasicMap{
             for(Hexagon neighbor : mapData.getNeighbors(current)){
                 HexData neighborHexData = mapData.getHexData(neighbor);
                 if(neighborHexData.terrain.traversable){
-                    int new_cost = cost_so_far.get(current) + neighborHexData.terrain.getTerrainCost();
+                    int new_cost = movable.get(current) + neighborHexData.terrain.getTerrainCost();
                     if(new_cost <= maxRange){
-                        if(!cost_so_far.containsKey(neighbor) || new_cost < cost_so_far.get(neighbor)){
-                            cost_so_far.put(neighbor, new_cost);
-                            movable.add(neighbor);
+                        if(!movable.containsKey(neighbor) || new_cost < movable.get(neighbor)){
+                            movable.put(neighbor, new_cost);
                             frontier.add(neighbor);
                         }
                     }
                 }
             }
         }
+
+    }
+
+    public boolean reacheable(Hexagon hex){
+        return movable.containsKey(hex);
+    }
+
+    public void resetMovable(){
+        movable = null;
     }
 
     public void drawMap() {
         if(movable != null){
-            for(Hexagon hex : movable){
-                drawHex(mapData.getPoints(hex), type);
+            for(HashMap.Entry<Hexagon, Integer> entry: movable.entrySet()){
+                drawHex(mapData.getPoints(entry.getKey()), type);
             }
         }
     }
@@ -184,11 +190,47 @@ class BuildingMap extends Map{
         gc.setFill(Color.web(hexData.building.getFillColor()));
         switch (hexData.building.shape){
             case Circle:
-                gc.fillRect(center.getX() - 8, center.getY() - 8, 16, 16);
+                gc.fillOval(center.getX() - 8, center.getY() - 8, 16, 16);
                 break;
             case Square:
-                gc.fillOval(center.getX() - 8, center.getY() - 8, 16, 16);
+                gc.fillRect(center.getX() - 8, center.getY() - 8, 16, 16);
                 break;
         }
     }
+}
+
+class PlayerMap extends Map{
+    Hexagon currentPosition;
+    Player player;
+
+    public PlayerMap(MapData mapData, GraphicsContext gc, String name) {
+        super(mapData, gc);
+        player = new Player(name);
+    }
+
+    public void setPlayer(Hexagon hex){
+        mapData.getHexData(hex).setPlayer(player);
+        currentPosition = hex;
+    }
+
+    public void movePlayer(Hexagon newHex){
+        mapData.getHexData(currentPosition).player = null;
+        mapData.getHexData(newHex).setPlayer(player);
+        currentPosition = newHex;
+
+    }
+
+    @Override
+    void drawMap() {
+        drawHex(mapData.getHexData(currentPosition), mapData.hex_to_pixel(currentPosition));
+    }
+
+
+    public void drawHex(HexData hexData, Point center) {
+        gc.setStroke(Color.web(hexData.player.getStrokeColor()));
+        gc.setFill(Color.web(hexData.player.getFillColor()));
+
+        gc.fillRect(center.getX() - 8, center.getY() - 8, 16, 16);
+    }
+
 }

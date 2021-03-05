@@ -53,7 +53,7 @@ class Terrain extends HexType implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        map.Terrain terrain = (map.Terrain) o;
+        Terrain terrain = (Terrain) o;
         return terrainCost == terrain.terrainCost && traversable == terrain.traversable && name.equals(terrain.name);
     }
 
@@ -91,7 +91,7 @@ class State extends HexType implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        map.State state = (map.State) o;
+        State state = (State) o;
         return Objects.equals(name, state.name) && Objects.equals(hexCode, state.hexCode);
     }
 
@@ -124,7 +124,6 @@ class Building extends HexType implements Serializable {
     String name;
 
     enum Shape {Circle, Square}
-
     Shape shape;
 
     public Building(String name) {
@@ -162,9 +161,15 @@ class Building extends HexType implements Serializable {
 }
 
 class Player extends HexType implements Serializable {
+    String name;
+
+    public Player(String name) {
+        this.name = name;
+    }
+
     @Override
     String getName() {
-        return "Player";
+        return name;
     }
 
     @Override
@@ -175,5 +180,12 @@ class Player extends HexType implements Serializable {
     @Override
     String getFillColor() {
         return "#E90D15";
+    }
+
+    @Override
+    public String toString() {
+        return "Player{" +
+                "name='" + name + '\'' +
+                '}';
     }
 }

@@ -22,7 +22,7 @@ import java.util.HashMap;
 
 public class Main extends Application {
 
-    enum Action {TerrainDrawing, Move, PoliticalDrawing, BuildingDraw}
+    enum Action {TerrainDrawing, Move, PoliticalDrawing, BuildingDraw, Selector}
     Action currentAction;
 
     HexType currentType;
@@ -59,7 +59,7 @@ public class Main extends Application {
 
     public void setUpBuildings(HBox buildingControls){
         addType(buildingControls, new Building("Trade Post"), Action.BuildingDraw);
-        addType(buildingControls, new Building("City", Building.Shape.Square), Action.BuildingDraw);
+        addType(buildingControls, new Building("City", Building.Shape.Circle), Action.BuildingDraw);
     }
 
     public void setUpControls(HBox controls){
