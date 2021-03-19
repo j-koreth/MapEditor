@@ -3,6 +3,7 @@ package map;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -66,6 +67,100 @@ public class Main extends Application {
         controls.setSpacing(10);
         controls.setPadding(new Insets(10));
     }
+
+    public void addState(HBox politicalControls){
+        VBox vbox = new VBox();
+        HBox name = new HBox();
+        Label nameLabel = new Label("Name:  ");
+        nameLabel.setMinSize(40, 10);
+        nameLabel.setPadding(new Insets(5));
+        TextField nameInput = new TextField();
+        nameInput.setMinSize(80, 10);
+        name.getChildren().addAll(nameLabel, nameInput);
+        name.setPadding(new Insets(10));
+
+        HBox color = new HBox();
+        Label colorLabel = new Label("Color:  ");
+        colorLabel.setPadding(new Insets(5));
+        colorLabel.setMinSize(40, 10);
+        TextField colorInput = new TextField();
+        colorInput.setMinSize(80, 10);
+        colorInput.setPromptText("Hexcode");
+        color.getChildren().addAll(colorLabel, colorInput);
+        color.setPadding(new Insets(10));
+
+        HBox buttonBox = new HBox();
+        Button submitButton = new Button("Submit");
+        submitButton.setPadding(new Insets(5));
+        buttonBox.getChildren().add(submitButton);
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
+
+        vbox.setPadding(new Insets(20));
+        vbox.getChildren().addAll(name, color, buttonBox);
+        vbox.setAlignment(Pos.CENTER);
+        Stage stage = new Stage();
+        stage.setScene(new Scene(vbox));
+
+        submitButton.setOnMouseClicked(event -> {
+            addType(politicalControls, new State(nameInput.getText(), colorInput.getText()) ,Action.PoliticalDrawing);
+            stage.close();
+        });
+
+        stage.showAndWait();
+    }
+
+    public void addTerrain(HBox terrainControls){
+        VBox vbox = new VBox();
+        HBox name = new HBox();
+        Label nameLabel = new Label("Name:  ");
+        nameLabel.setMinSize(40, 10);
+        nameLabel.setPadding(new Insets(5));
+        TextField nameInput = new TextField();
+        nameInput.setMinSize(80, 10);
+        name.getChildren().addAll(nameLabel, nameInput);
+        name.setPadding(new Insets(10));
+
+        HBox color = new HBox();
+        Label colorLabel = new Label("Color:  ");
+        colorLabel.setPadding(new Insets(5));
+        colorLabel.setMinSize(40, 10);
+        TextField colorInput = new TextField();
+        colorInput.setMinSize(80, 10);
+        colorInput.setPromptText("Hexcode");
+        color.getChildren().addAll(colorLabel, colorInput);
+        color.setPadding(new Insets(10));
+
+        HBox cost = new HBox();
+        Label costLabel = new Label("Terrain Cost:  ");
+        costLabel.setPadding(new Insets(5));
+        costLabel.setMinSize(40, 10);
+        TextField costInput = new TextField();
+        costInput.setMinSize(80, 10);
+        costInput.setPromptText("Integer");
+        cost.getChildren().addAll(costLabel, costInput);
+        cost.setPadding(new Insets(10));
+
+
+        HBox buttonBox = new HBox();
+        Button submitButton = new Button("Submit");
+        submitButton.setPadding(new Insets(5));
+        buttonBox.getChildren().add(submitButton);
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
+
+        vbox.setPadding(new Insets(20));
+        vbox.getChildren().addAll(name, color,cost, buttonBox);
+        vbox.setAlignment(Pos.CENTER);
+        Stage stage = new Stage();
+        stage.setScene(new Scene(vbox));
+
+        submitButton.setOnMouseClicked(event -> {
+            addType(terrainControls, new Terrain(nameInput.getText(), Integer.parseInt(costInput.getText()), colorInput.getText()), Action.TerrainDrawing);
+            stage.close();
+        });
+
+        stage.showAndWait();
+    }
+
 
     @Override
     public void start(Stage primaryStage) {
@@ -147,11 +242,22 @@ public class Main extends Application {
 
         //MenuBar
         MenuBar menuBar = new MenuBar();
-        Menu menu = new Menu("File");
+        Menu fileMenu = new Menu("File");
         MenuItem saveItem = new MenuItem("Save");
         MenuItem openItem = new MenuItem("Open");
-        menu.getItems().addAll(saveItem, openItem);
-        menuBar.getMenus().add(menu);
+        fileMenu.getItems().addAll(saveItem, openItem);
+
+        Menu stateMenu = new Menu("State");
+        MenuItem addStateItem = new MenuItem("Add");
+        addStateItem.setOnAction(event -> addState(politicalControls));
+        stateMenu.getItems().add(addStateItem);
+
+        Menu terrainMenu = new Menu("Terrain");
+        MenuItem addTerrainItem = new MenuItem("Add");
+        addTerrainItem.setOnAction(event -> addTerrain(terrainControls));
+        terrainMenu.getItems().add(addTerrainItem);
+
+        menuBar.getMenus().addAll(fileMenu, stateMenu, terrainMenu);
 
         //Adding Canvases to BorderPane
         Pane pane = new Pane();
@@ -221,6 +327,8 @@ public class Main extends Application {
                 e.printStackTrace();
             }
         });
+
+
 
         for(HashMap.Entry<Hexagon, HexData> entry : mapData.data.entrySet()){
             entry.getValue().setTerrain(new Terrain("Ocean", "#2273B8"));
